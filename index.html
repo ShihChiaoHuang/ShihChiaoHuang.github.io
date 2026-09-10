@@ -1,100 +1,127 @@
-<!DOCTYPE HTML>
-<!--
-	Snapshot by TEMPLATED
-	templated.co @templatedco
-	Released for free under the Creative Commons Attribution 3.0 license (templated.co/license)
--->
-<html>
-	<head>
-		<title>詩喬軒</title>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<link rel="stylesheet" href="assets/css/main.css" />
-		<link rel="shortcut icon" type="image/png" href="images/favicon.ico"/>
-	</head>
-	<body>
-		<div id="preload"><img src="images/banner.jpg" width="1" height="1" alt="Image 01" /></div>
-		<div class="page-wrap">
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>詩喬軒 - 黃詩喬水墨藝術</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500&family=Noto+Serif+TC:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-color: #f7f6f2; 
+      --text-main: #2c2c2a;
+      --text-muted: #888885;
+      --accent-color: #5a5a5a;
+      --font-serif: 'Noto Serif TC', serif;
+      --font-sans: 'Noto Sans TC', sans-serif;
+    }
 
-			<!-- Nav -->
-				<nav id="nav">
-					<ul>
-						<li><a href="index.html" class="active"><span class="icon fa-home"></span></a></li>
-						<li><a href="routes/gallery.html"><span class="icon fa-camera-retro"></span></a></li>
-						<li><a href="routes/generic.html"><span class="icon fa-file-text-o"></span></a></li>
-					</ul>
-				</nav>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    a { text-decoration: none; color: inherit; }
 
-			<!-- Main -->
-				<section id="main">
+    /* ===== 頂部導覽列 ===== */
+    .navbar { display: flex; justify-content: space-between; align-items: center; padding: 2rem 4rem; }
+    .logo { font-family: var(--font-serif); font-size: 1.8rem; font-weight: 600; letter-spacing: 4px; }
+    .nav-links { display: flex; gap: 3rem; font-size: 0.9rem; font-weight: 500; letter-spacing: 1px; }
+    .nav-links a { position: relative; padding-bottom: 4px; transition: color 0.3s ease; }
+    .nav-links a:hover { color: var(--accent-color); }
+    .nav-links a.active { border-bottom: 1px solid var(--text-main); }
 
-					<!-- Banner -->
-						<section id="banner">
-							<div class="inner">
-								<h1>詩喬軒</h1>
-								<p>外師造化，中得心源</p>
-								<ul class="actions">
-									<li><a href="#galleries" class="button alt scrolly big">Continue</a></li>
-								</ul>
-							</div>
-						</section>
+    /* ===== 首頁主視覺 (加入最大寬度，強制置中包攏) ===== */
+    .landing { 
+      flex: 1; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      padding: 0 5%; 
+      gap: 5rem; /* 改用固定的間距，不隨螢幕無限放大 */
+      max-width: 1300px; /* 設定最大寬度，大螢幕才不會散掉 */
+      margin: 0 auto; /* 整個區塊置中 */
+      width: 100%;
+    }
+    
+    /* 左側文字區塊設定固定寬度，不再無限延伸 */
+    .landing-text { flex: 0 1 450px; }
+    .landing-text h1 { font-family: var(--font-serif); font-size: 4.5rem; font-weight: 500; letter-spacing: 0.1em; line-height: 1.2; margin-bottom: 1.5rem; }
+    .landing-text p { color: var(--text-muted); font-size: 1.1rem; letter-spacing: 0.1em; margin-bottom: 3rem; line-height: 1.8; text-align: justify; }
+    
+    .btn-enter { display: inline-block; padding: 1rem 2.5rem; border: 1px solid var(--text-main); font-size: 0.9rem; letter-spacing: 2px; transition: all 0.3s ease; }
+    .btn-enter:hover { background-color: var(--text-main); color: var(--bg-color); }
 
-					<!-- Gallery -->
-						<section id="galleries">
+    /* ===== 直排浮水印 ===== */
+    .vertical-watermark {
+      writing-mode: vertical-rl;
+      font-family: var(--font-serif);
+      font-size: 2.5rem;
+      color: var(--text-main);
+      opacity: 0.08; 
+      letter-spacing: 1.5em;
+      user-select: none;
+      margin-top: -2rem; 
+    }
 
-							<!-- Photo Galleries -->
-								<div class="gallery">
-									<header class="special">
-										<h2>作品概覽</h2>
-									</header>
-									<div class="content">
-										<div class="media">
-											<a href="images/fulls/02.jpg"><img src="images/thumbs/02.jpg" alt="" title="夢幻黃山" /></a>
-										</div>
-										<div class="media">
-											<a href="images/fulls/06.jpg"><img src="images/thumbs/06.jpg" alt="" title="逍遙遊" /></a>
-										</div>
-										<div class="media">
-											<a href="images/fulls/10.jpg"><img src="images/thumbs/10.jpg" alt="" title="竹林清趣" /></a>
-										</div>
-										<div class="media">
-											<a href="images/fulls/03.jpg"><img src="images/thumbs/03.jpg" alt="" title="百合滿園香" /></a>
-										</div>
-										<div class="media">
-											<a href="images/fulls/13.jpg"><img src="images/thumbs/13.jpg" alt="" title="忘極-枯山水" /></a>
-										</div>
-										<div class="media">
-											<a href="images/fulls/14.jpg"><img src="images/thumbs/14.jpg" alt="" title="忘象-枯山水" /></a>
-										</div>
-										<div class="media">
-											<a href="images/fulls/20.jpg"><img src="images/thumbs/20.jpg" alt="" title="望逍遙" /></a>
-										</div>
-										<div class="media all withered">
-											<a href="images/fulls/15.jpg"><img src="images/thumbs/15.jpg" alt="" title="忘石竹影" /></a>
-										</div>
-									</div>
-									<footer>
-										<a href="routes/gallery.html" class="button big">作品集</a>
-									</footer>
-								</div>
-						</section>
+    /* ===== 首頁圖片 (取消靠右對齊，改為置中) ===== */
+    .landing-image { flex: 0 1 auto; display: flex; justify-content: center; align-items: center; height: 70vh; }
+    .landing-image img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 4px; box-shadow: 0 15px 35px rgba(0,0,0,0.15); }
 
-					<!-- Footer -->
-						<footer id="footer">
-							<div class="copyright">
-								&copy; Untitled Design: <a href="https://templated.co/">TEMPLATED</a>. Images: <a href="https://unsplash.com/">Unsplash</a>.
-							</div>
-						</footer>
-				</section>
-		</div>
+    /* ===== 底部區塊 ===== */
+    footer { padding: 2rem 4rem; text-align: left; font-size: 0.8rem; color: var(--text-muted); letter-spacing: 1px; }
 
-		<!-- Scripts -->
-			<script src="assets/js/jquery.min.js"></script>
-			<script src="assets/js/jquery.poptrox.min.js"></script>
-			<script src="assets/js/jquery.scrolly.min.js"></script>
-			<script src="assets/js/skel.min.js"></script>
-			<script src="assets/js/util.js"></script>
-			<script src="assets/js/main.js"></script>
+    /* ===== 響應式設定 (手機版) ===== */
+    @media (max-width: 1024px) {
+      .landing { flex-direction: column; padding: 4rem 2rem; text-align: center; gap: 3rem; }
+      .landing-text { max-width: 100%; }
+      .vertical-watermark { display: none; } 
+      .landing-image { height: auto; }
+      .landing-image img { max-height: 50vh; }
+      .navbar { flex-direction: column; gap: 1.5rem; padding: 1.5rem; }
+      footer { text-align: center; }
+    }
+  </style>
+</head>
+<body>
 
-	</body>
+  <nav class="navbar">
+    <div class="logo">詩喬軒</div>
+    <div class="nav-links">
+      <a href="index.html" class="active">首頁</a>
+      <a href="routes/gallery.html">作品集</a>
+      <a href="routes/generic.html">關於我</a>
+    </div>
+  </nav>
+
+  <main class="landing">
+    <!-- 左側文字區塊 -->
+    <div class="landing-text">
+      <h1>外師造化<br>中得心源</h1>
+      <p>黃詩喬水墨藝術創作。<br>結合傳統底蘊與現代人文意象，呈現萬物生息的哲學之美。</p>
+      <a href="routes/gallery.html" class="btn-enter">進入畫廊</a>
+    </div>
+
+    <!-- 中間直排浮水印 -->
+    <div class="vertical-watermark">心 齋 坐 忘</div>
+
+    <!-- 右側圖片區塊 -->
+    <div class="landing-image">
+      <img src="images/banner.jpg" alt="枯山水意象">
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Shih-Chiao Huang. All Rights Reserved.</p>
+  </footer>
+
+</body>
 </html>
