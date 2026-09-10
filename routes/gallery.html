@@ -53,17 +53,15 @@
     @media (max-width: 1024px) { .gallery-container { column-count: 2; } }
     @media (max-width: 600px) { .gallery-container { column-count: 1; padding: 0 1.5rem 4rem; } }
 
-    /* 修正 Safari CSS Columns 與 圓角 Bug */
     .gallery-item { 
-      display: inline-block; /* Safari 必備 */
-      width: 100%;           /* Safari 必備 */
+      display: inline-block; /* Safari 渲染修正 */
+      width: 100%;           
       margin-bottom: 2rem; 
       position: relative; 
       overflow: hidden; 
       border-radius: 4px; 
-      cursor: pointer;
       animation: fadeIn 0.8s ease-in-out; 
-      -webkit-transform: translateZ(0); /* 強制開啟 GPU 渲染，修復 Safari 遮罩失效 */
+      -webkit-transform: translateZ(0); /* Safari 渲染修正 */
       transform: translateZ(0);
     }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -71,23 +69,31 @@
     .gallery-item img { width: 100%; display: block; transition: transform 0.7s cubic-bezier(0.165, 0.84, 0.44, 1); }
     .gallery-item:hover img { transform: scale(1.06); }
 
-    /* 修正 Safari 毛玻璃與定位相容性 */
+    /* ===== 修正：遮罩的防誤觸與 Safari 毛玻璃設定 ===== */
     .overlay { 
       position: absolute; 
       top: 0; left: 0; 
       width: 100%; height: 100%; 
       background: rgba(26, 26, 24, 0.75); 
-      -webkit-backdrop-filter: blur(2px); /* Safari 專屬前綴 */
+      -webkit-backdrop-filter: blur(2px); /* Safari 毛玻璃 */
       backdrop-filter: blur(2px); 
       opacity: 0; 
+      visibility: hidden; /* 關鍵！平常隱藏且不可點擊 */
       transition: all 0.4s ease; 
       display: flex; 
       flex-direction: column; 
       justify-content: flex-end; 
       padding: 2.5rem; 
       color: white; 
+      cursor: pointer; /* 滑鼠移上遮罩時顯示為手指 */
     }
-    .gallery-item:hover .overlay { opacity: 1; }
+    
+    /* 當 Hover 時，遮罩才會變得可見且可點擊 */
+    .gallery-item:hover .overlay { 
+      opacity: 1; 
+      visibility: visible; 
+    }
+    
     .overlay-content { transform: translateY(20px); transition: transform 0.4s ease; }
     .gallery-item:hover .overlay-content { transform: translateY(0); }
 
@@ -96,8 +102,7 @@
     .work-meta span::after { content: '|'; margin-left: 10px; color: #888; }
     .work-meta span:last-child::after { content: ''; }
 
-    /* 點擊優化：讓按鈕不可被獨立點擊，事件穿透給整張畫作 */
-    .btn-view { display: inline-block; padding: 0.5rem 1.2rem; border: 1px solid rgba(255,255,255,0.4); border-radius: 20px; font-size: 0.8rem; letter-spacing: 1px; transition: background 0.3s, border 0.3s; pointer-events: none; }
+    .btn-view { display: inline-block; padding: 0.5rem 1.2rem; border: 1px solid rgba(255,255,255,0.4); border-radius: 20px; font-size: 0.8rem; letter-spacing: 1px; transition: background 0.3s, border 0.3s; }
     .gallery-item:hover .btn-view { background: white; color: #2c2c2a; border-color: white; }
 
     /* ===== 燈箱 (Lightbox) 樣式 ===== */
@@ -179,7 +184,7 @@
 
   <main class="gallery-container" id="gallery">
     
-    <!-- 作品列表 (共 26 件) -->
+    <!-- 作品列表 -->
     <div class="gallery-item" data-category="landscape">
       <img src="../images/fulls/05.jpg" alt="望見台灣">
       <div class="overlay"><div class="overlay-content">
@@ -445,7 +450,7 @@
             const itemCategory = item.getAttribute('data-category');
             
             if (targetCategory === 'all' || targetCategory === itemCategory) {
-              item.style.display = 'inline-block';
+              item.style.display = 'inline-block'; /* Safari 需要 inline-block */
               item.style.animation = 'none';
               item.offsetHeight; 
               item.style.animation = 'fadeIn 0.8s ease-in-out';
@@ -462,11 +467,15 @@
       const lightboxCaption = document.getElementById('lightbox-caption');
       const closeBtn = document.querySelector('.lightbox-close');
 
-      // 修正：將事件監聽器綁定在整張 gallery-item 上，而非小按鈕
-      document.querySelectorAll('.gallery-item').forEach(item => {
-        item.addEventListener('click', function(e) {
-          const imgSrc = this.querySelector('img').src;
-          const title = this.querySelector('.work-title').innerText;
+      // 修正：現在將點擊事件綁在 .overlay 上
+      // 因為 .overlay 平常是 hidden 的，手機的「第一次點擊」會被忽略並觸發 Hover 狀態。
+      // 當它變得可見時，「第二次點擊」才會真正觸發這個打開大圖的功能！
+      document.querySelectorAll('.overlay').forEach(overlay => {
+        overlay.addEventListener('click', function(e) {
+          e.stopPropagation(); 
+          const item = this.closest('.gallery-item');
+          const imgSrc = item.querySelector('img').src;
+          const title = item.querySelector('.work-title').innerText;
 
           lightboxImg.src = imgSrc;
           lightboxCaption.innerText = title;
@@ -479,7 +488,7 @@
         lightbox.classList.remove('show');
       });
 
-      // 關閉燈箱 (點擊背景)
+      // 關閉燈箱 (點擊背景空白處)
       lightbox.addEventListener('click', (e) => {
         if (e.target === lightbox) {
           lightbox.classList.remove('show');
