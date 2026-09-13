@@ -17,46 +17,34 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Dependencies
-        # 安裝 ImageMagick 用於壓圖，jq 用於安全地處理 JSON
         run: sudo apt-get update && sudo apt-get install -y imagemagick jq
 
       - name: Process Images and Atomic JSON Generation
         run: |
+          # 1. 徹底清空舊有的生成檔，確保完全 Atomic 覆寫，不留殘留檔案
+          rm -rf images/fulls images/thumbs
           mkdir -p images/fulls images/thumbs
+          
           cd images/raw
-          
-          # 開啟 nullglob，避免資料夾為空時產生錯誤
           shopt -s nullglob
-          
-          # 準備一個空的 JSON 陣列字串
           json_array="[]"
           
-          # 掃描 raw 底下的所有檔案
           for img in *; do
             [ -f "$img" ] || continue 
             
-            # 取得無副檔名的檔名，並統一加上 .jpg (因為網頁端統一吃 jpg)
             basename="${img%.*}"
             target_name="${basename}.jpg"
             
-            echo "Checking $img..."
+            echo "Processing $img..."
             
-            # 1. 圖片處理 (冪等操作：如果輸出的檔案已經存在，就跳過轉檔，節省 CI 時間)
-            if [ ! -f "../fulls/$target_name" ]; then
-              echo "  -> Converting to fulls..."
-              convert "$img" -resize "2000x2000>" -quality 82 "../fulls/$target_name"
-            fi
+            # 直接轉檔 (因為前面已經清空，所以必定全新生成)
+            convert "$img" -resize "2000x2000>" -quality 82 "../fulls/$target_name"
+            convert "$img" -resize "800x800>" -quality 75 "../thumbs/$target_name"
             
-            if [ ! -f "../thumbs/$target_name" ]; then
-              echo "  -> Converting to thumbs..."
-              convert "$img" -resize "800x800>" -quality 75 "../thumbs/$target_name"
-            fi
-            
-            # 2. JSON 產生 (將掃描到的檔名，利用 jq 安全地 push 到 json_array 中)
+            # 更新 JSON 清單
             json_array=$(jq --arg v "$target_name" '. += [$v]' <<< "$json_array")
           done
           
-          # 回到根目錄，進行 Atomic 覆寫
           cd ../../
           echo "$json_array" > image_list.json
           echo "Generated image_list.json successfully!"
@@ -66,10 +54,11 @@ jobs:
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           
-          git add images/fulls/* images/thumbs/* image_list.json
+          # 2. 使用 -A (All) 確保 git 記錄到「被改名或被刪除的舊檔」
+          git add -A images/fulls images/thumbs image_list.json
           
           if ! git diff --staged --quiet; then
-            git commit -m "Auto-process images and update image_list.json [skip ci]"
+            git commit -m "Auto-process images and sync states (Atomic overwrite) [skip ci]"
             git push
           else
             echo "No changes to commit."
