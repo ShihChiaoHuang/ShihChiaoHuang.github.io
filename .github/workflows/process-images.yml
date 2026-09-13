@@ -1,0 +1,58 @@
+name: Process and Compress Raw Images
+
+on:
+  push:
+    paths:
+      - 'images/raw/**' # 只有當 raw 資料夾有變動時才觸發
+  workflow_dispatch: # 允許手動執行
+
+jobs:
+  process-images:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # 賦予這個腳本寫入 repository 的權限
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install ImageMagick
+        run: sudo apt-get install -y imagemagick
+
+      - name: Process Images (Generate Fulls and Thumbs)
+        run: |
+          # 建立目標資料夾（如果不存在）
+          mkdir -p images/fulls
+          mkdir -p images/thumbs
+
+          # 進入 raw 資料夾處理每一張圖片
+          cd images/raw
+          for img in *.jpg *.JPG *.jpeg *.JPEG; do
+            # 如果沒有匹配到檔案，就跳過
+            [ -e "$img" ] || continue 
+            
+            echo "Processing $img..."
+            
+            # 產生 fulls 大圖：長邊最大 2000px，品質 82%
+            convert "$img" -resize "2000x2000>" -quality 82 "../fulls/${img%.*}.jpg"
+            
+            # 產生 thumbs 縮圖：長邊最大 800px，品質 75%
+            convert "$img" -resize "800x800>" -quality 75 "../thumbs/${img%.*}.jpg"
+          done
+
+      - name: Commit and Push Processed Images
+        run: |
+          # 設定 git 身分
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          
+          # 將處理好的圖片加入 git
+          git add images/fulls/* images/thumbs/*
+          
+          # 檢查是否有改動，如果有就 commit 並 push
+          if ! git diff --staged --quiet; then
+            git commit -m "Auto-process and compress raw images [skip ci]"
+            git push
+          else
+            echo "No new images to process."
+          fi
