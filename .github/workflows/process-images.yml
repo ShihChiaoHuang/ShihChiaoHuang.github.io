@@ -3,56 +3,74 @@ name: Process and Compress Raw Images
 on:
   push:
     paths:
-      - 'images/raw/**' # 只有當 raw 資料夾有變動時才觸發
-  workflow_dispatch: # 允許手動執行
+      - 'images/raw/**'
+  workflow_dispatch:
 
 jobs:
   process-images:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # 賦予這個腳本寫入 repository 的權限
+      contents: write
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Install ImageMagick
-        run: sudo apt-get install -y imagemagick
+      - name: Install Dependencies
+        # 安裝 ImageMagick 用於壓圖，jq 用於安全地處理 JSON
+        run: sudo apt-get update && sudo apt-get install -y imagemagick jq
 
-      - name: Process Images (Generate Fulls and Thumbs)
+      - name: Process Images and Atomic JSON Generation
         run: |
-          # 建立目標資料夾（如果不存在）
-          mkdir -p images/fulls
-          mkdir -p images/thumbs
-
-          # 進入 raw 資料夾處理每一張圖片
+          mkdir -p images/fulls images/thumbs
           cd images/raw
-          for img in *.jpg *.JPG *.jpeg *.JPEG; do
-            # 如果沒有匹配到檔案，就跳過
-            [ -e "$img" ] || continue 
+          
+          # 開啟 nullglob，避免資料夾為空時產生錯誤
+          shopt -s nullglob
+          
+          # 準備一個空的 JSON 陣列字串
+          json_array="[]"
+          
+          # 掃描 raw 底下的所有檔案
+          for img in *; do
+            [ -f "$img" ] || continue 
             
-            echo "Processing $img..."
+            # 取得無副檔名的檔名，並統一加上 .jpg (因為網頁端統一吃 jpg)
+            basename="${img%.*}"
+            target_name="${basename}.jpg"
             
-            # 產生 fulls 大圖：長邊最大 2000px，品質 82%
-            convert "$img" -resize "2000x2000>" -quality 82 "../fulls/${img%.*}.jpg"
+            echo "Checking $img..."
             
-            # 產生 thumbs 縮圖：長邊最大 800px，品質 75%
-            convert "$img" -resize "800x800>" -quality 75 "../thumbs/${img%.*}.jpg"
+            # 1. 圖片處理 (冪等操作：如果輸出的檔案已經存在，就跳過轉檔，節省 CI 時間)
+            if [ ! -f "../fulls/$target_name" ]; then
+              echo "  -> Converting to fulls..."
+              convert "$img" -resize "2000x2000>" -quality 82 "../fulls/$target_name"
+            fi
+            
+            if [ ! -f "../thumbs/$target_name" ]; then
+              echo "  -> Converting to thumbs..."
+              convert "$img" -resize "800x800>" -quality 75 "../thumbs/$target_name"
+            fi
+            
+            # 2. JSON 產生 (將掃描到的檔名，利用 jq 安全地 push 到 json_array 中)
+            json_array=$(jq --arg v "$target_name" '. += [$v]' <<< "$json_array")
           done
+          
+          # 回到根目錄，進行 Atomic 覆寫
+          cd ../../
+          echo "$json_array" > image_list.json
+          echo "Generated image_list.json successfully!"
 
-      - name: Commit and Push Processed Images
+      - name: Commit and Push
         run: |
-          # 設定 git 身分
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           
-          # 將處理好的圖片加入 git
-          git add images/fulls/* images/thumbs/*
+          git add images/fulls/* images/thumbs/* image_list.json
           
-          # 檢查是否有改動，如果有就 commit 並 push
           if ! git diff --staged --quiet; then
-            git commit -m "Auto-process and compress raw images [skip ci]"
+            git commit -m "Auto-process images and update image_list.json [skip ci]"
             git push
           else
-            echo "No new images to process."
+            echo "No changes to commit."
           fi
